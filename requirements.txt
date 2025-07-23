@@ -1,0 +1,13 @@
+fastapi
+uvicorn
+google-api-python-client
+python-multipart
+tensorflow
+tensorflow-hub
+librosa
+numpy
+pytube
+flask
+flask_cors
+pandas
+moviepy
