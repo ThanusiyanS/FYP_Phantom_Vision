@@ -9,6 +9,13 @@ __pycache__/
 *.h5
 *.keras
 venv/
+.wav
+.mp3
+.mp4
+.wav.gz
+.mp3.gz
+.mp4.gz
+
 
 # Node
 node_modules/

@@ -11,3 +11,12 @@ flask
 flask_cors
 pandas
 moviepy
+torch
+torchvision
+yt-dlp
+librosa
+soundfile
+transformers
+opencv-python
+webrtcvad
+tensorflow==2.15.0
