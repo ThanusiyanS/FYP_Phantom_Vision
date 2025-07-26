@@ -1,24 +1,29 @@
-resource_id,audio_file,video_file,avg_audio_deepfake_score,avg_car_crash_deepfake_score,avg_video_deepfake_score
-id_01,50-10.wav,,0.0,0.0,
-id_02,file2.wav_16k.wav_norm.wav_mono.wav_silence.wav_2sec.wav,,0.0,0.0,
-id_03,50-8-wind-0.wav,50-8-wind-0.mp4,0.3212,0.3212,0.648
-id_04,50-10-thunderstorm-0.wav,,0.0,0.0,
-id_05,file6.wav_16k.wav_norm.wav_mono.wav_silence.wav_2sec.wav,,0.0,0.0,
-id_06,file16.wav_16k.wav_norm.wav_mono.wav_silence.wav_2sec.wav,,0.0,0.0,
-id_07,deepfaked_0-0-0-thunderstorm-0.wav,,1.0,1.0,
-id_08,50-8.wav,50-8.mp4,0.7521,0.7521,0.6693
-id_09,file3.wav_16k.wav_norm.wav_mono.wav_silence.wav_2sec.wav,,0.0,0.0,
-id_10,file13.wav_16k.wav_norm.wav_mono.wav_silence.wav_2sec.wav,,0.0,0.0,
-id_11,deepfaked_0-0-0-rain-0.wav,,1.0,1.0,
-id_12,deepfaked_0-0-0-road_traffic-0.wav,,1.0,1.0,
-id_13,file19.wav_16k.wav_norm.wav_mono.wav_silence.wav_2sec.wav,,0.0,0.0,
-id_14,file10.wav_16k.wav_norm.wav_mono.wav_silence.wav_2sec.wav,,0.0,0.0,
-id_15,50-10-wind-0.wav,,0.0,0.0,
-id_16,50-10-road_traffic-0.wav,,0.0,0.0,
-vid_17,,youtube video #H--sDM-cpdE.mp4,,,0.5778
-vid_18,,youtube video #HdEZeQ9ePWo.mp4,,,0.6804
-vid_19,,youtube video #OCVAO0Ksmac.mp4,,,0.574
-vid_20,,youtube video #Xs_TWzutH4k.mp4,,,0.5949
-vid_21,,youtube video #jbkuqT7k3Bg.mp4,,,0.5553
-vid_22,,youtube video #v-_fwsuZlBc.mp4,,,0.5459
-vid_23,,youtube video #vVbigGr65v4.mp4,,,0.6991
+resource_id,audio_file,video_file,avg_audio_deepfake_score,avg_voice_deepfake_score,avg_video_deepfake_score,avg_face_deepfake_score,deepfake_prediction_score,deepfake_prediction_label
+resource_01,50-10.wav,,0.0,0.0,,,0.0,0
+resource_02,file2.wav_16k.wav_norm.wav_mono.wav_silence.wav_2sec.wav,,0.0,0.0,,,0.0,0
+resource_03,50-8-wind-0.wav,50-8-wind-0.mp4,0.3212,0.3212,,,0.3212,0
+resource_04,50-10-thunderstorm-0.wav,,0.0,0.0,,,0.0,0
+resource_05,file6.wav_16k.wav_norm.wav_mono.wav_silence.wav_2sec.wav,,0.0,0.0,,,0.0,0
+resource_06,file16.wav_16k.wav_norm.wav_mono.wav_silence.wav_2sec.wav,,0.0,0.0,,,0.0,0
+resource_07,deepfaked_0-0-0-thunderstorm-0.wav,,1.0,1.0,,,1.0,1
+resource_08,50-8.wav,50-8.mp4,0.7521,0.7521,,,0.7521,1
+resource_09,file3.wav_16k.wav_norm.wav_mono.wav_silence.wav_2sec.wav,,0.0,0.0,,,0.0,0
+resource_10,file13.wav_16k.wav_norm.wav_mono.wav_silence.wav_2sec.wav,,0.0,0.0,,,0.0,0
+resource_11,deepfaked_0-0-0-rain-0.wav,,1.0,1.0,,,1.0,1
+resource_12,deepfaked_0-0-0-road_traffic-0.wav,,1.0,1.0,,,1.0,1
+resource_13,file19.wav_16k.wav_norm.wav_mono.wav_silence.wav_2sec.wav,,0.0,0.0,,,0.0,0
+resource_14,file10.wav_16k.wav_norm.wav_mono.wav_silence.wav_2sec.wav,,0.0,0.0,,,0.0,0
+resource_15,50-10-wind-0.wav,,0.0,0.0,,,0.0,0
+resource_16,50-10-road_traffic-0.wav,,0.0,0.0,,,0.0,0
+resource_17,,01_02__exit_phone_room__YVGY8LOK.mp4,,,0.5806,,0.5806,0
+resource_18,,01_02__hugging_happy__YVGY8LOK.mp4,,,0.6795,,0.6795,1
+resource_19,,50-8-wind-0.mp4,,,0.5471,,0.5471,0
+resource_20,,50-8.mp4,,,0.5597,,0.5597,0
+resource_21,,aaagqkcdis.mp4,,,0.651,,0.651,1
+resource_22,,aaaoqepxnf.mp4,,,0.6464,,0.6464,0
+resource_23,,vs1.mp4,,,0.6634,,0.6634,1
+resource_24,,youtube video #H--sDM-cpdE.mp4,,,0.5582,,0.5582,0
+resource_25,,youtube video #HdEZeQ9ePWo.mp4,,,0.545,,0.545,0
+resource_26,,youtube video #OCVAO0Ksmac.mp4,,,0.68,,0.68,1
+resource_27,,youtube video #jbkuqT7k3Bg.mp4,,,0.5614,,0.5614,0
+resource_28,,youtube video #v-_fwsuZlBc.mp4,,,0.6763,,0.6763,1

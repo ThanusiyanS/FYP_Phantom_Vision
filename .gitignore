@@ -15,6 +15,8 @@ venv/
 .wav.gz
 .mp3.gz
 .mp4.gz
+deepfake_detection/video
+deepfake_detection/audio
 
 
 # Node
@@ -34,3 +36,9 @@ data/
 
 # VSCode
 .vscode/
+
+#icpr2020dfdc
+.idea/
+.DS_Store
+.ipynb_checkpoints/
+icpr2020dfdc/icpr2020dfdc/__pycache__/

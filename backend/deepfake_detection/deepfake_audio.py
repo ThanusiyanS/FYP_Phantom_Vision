@@ -12,6 +12,7 @@ import tensorflow as tf
 import urllib.request
 import csv as pycsv
 from sklearn.cluster import KMeans
+import pandas as pd
 
 # === MODEL ===
 class AudioModel(nn.Module):
@@ -115,39 +116,75 @@ def process_directory_and_save_csv(audio_dir, model_path):
     model.eval()
 
     audio_files = [f for f in os.listdir(audio_dir) if f.endswith((".wav", ".mp3", ".flac", ".ogg", ".m4a"))]
-    results = []
+    
+    # Define standard CSV columns
+    csv_columns = [
+        "resource_id", "audio_file", "video_file", 
+        "avg_audio_deepfake_score", "avg_voice_deepfake_score", 
+        "avg_video_deepfake_score", "avg_face_deepfake_score",
+        "deepfake_prediction_score", "deepfake_prediction_label"
+    ]
+    
+    # Load existing CSV or create new one
     script_dir = os.path.dirname(os.path.abspath(__file__))
+    csv_path = os.path.join(script_dir, "deepfake_score.csv")
+    
+    if os.path.exists(csv_path):
+        df = pd.read_csv(csv_path)
+        # Ensure all required columns exist
+        for col in csv_columns:
+            if col not in df.columns:
+                df[col] = ""
+        # Reorder columns to match standard format
+        df = df[csv_columns]
+    else:
+        df = pd.DataFrame(columns=csv_columns)
+    
     video_dir = os.path.join(script_dir, "video")
-    for idx, audio_file in enumerate(audio_files, 1):
+    
+    for audio_file in audio_files:
         audio_path = os.path.join(audio_dir, audio_file)
         avg_score = process_audio_for_deepfake_in_memory(audio_path, model, device, chunk_length=10)
+        
         # Check if corresponding video file exists
         video_file_candidate = os.path.splitext(audio_file)[0] + ".mp4"
         video_file_path = os.path.join(video_dir, video_file_candidate)
-        if os.path.exists(video_file_path):
-            video_file = video_file_candidate
-            avg_video_deepfake_score = ""
+        video_file = video_file_candidate if os.path.exists(video_file_path) else ""
+        
+        # Check if audio_file already exists in CSV
+        match = df["audio_file"] == audio_file
+        pred_score = round(avg_score, 4)
+        pred_label = "1" if pred_score > 0.63 else "0"
+        if match.any():
+            # Update existing row
+            df.loc[match, "avg_audio_deepfake_score"] = pred_score
+            df.loc[match, "avg_voice_deepfake_score"] = pred_score
+            if video_file:
+                df.loc[match, "video_file"] = video_file
+            df.loc[match, "deepfake_prediction_score"] = pred_score
+            df.loc[match, "deepfake_prediction_label"] = pred_label
         else:
-            video_file = ""
-            avg_video_deepfake_score = ""
-        results.append({
-            "resource_id": f"id_{idx:02d}",
-            "audio_file": audio_file,
-            "video_file": video_file,
-            "avg_audio_deepfake_score": round(avg_score, 4),
-            "avg_car_crash_deepfake_score": round(avg_score, 4),
-            "avg_video_deepfake_score": avg_video_deepfake_score
-        })
-    # Always save to backend/deepfake_detection/deepfake_score.csv
-    output_dir = os.path.dirname(os.path.abspath(__file__))
-    output_csv = os.path.join(output_dir, "deepfake_score.csv")
-    os.makedirs(output_dir, exist_ok=True)
-    with open(output_csv, mode="w", newline="") as csvfile:
-        fieldnames = ["resource_id", "audio_file", "video_file", "avg_audio_deepfake_score", "avg_car_crash_deepfake_score", "avg_video_deepfake_score"]
-        writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
-        writer.writeheader()
-        for row in results:
-            writer.writerow(row)
+            # Add new row with new resource_id
+            existing_ids = df["resource_id"].dropna().tolist()
+            next_id = 1
+            if existing_ids:
+                nums = [int(str(i).replace("vid_", "").replace("resource_", "")) for i in existing_ids if (str(i).startswith("vid_") or str(i).startswith("resource_")) and str(i).replace("vid_", "").replace("resource_", "").isdigit()]
+                if nums:
+                    next_id = max(nums) + 1
+            new_resource_id = f"resource_{next_id:02d}"
+            new_row = {col: "" for col in csv_columns}
+            new_row["resource_id"] = new_resource_id
+            new_row["audio_file"] = audio_file
+            new_row["video_file"] = video_file
+            new_row["avg_audio_deepfake_score"] = pred_score
+            new_row["avg_voice_deepfake_score"] = pred_score
+            new_row["deepfake_prediction_score"] = pred_score
+            new_row["deepfake_prediction_label"] = pred_label
+            df = pd.concat([df, pd.DataFrame([new_row])], ignore_index=True)
+    
+    # Save updated CSV
+    df.to_csv(csv_path, index=False)
+    print(f"Updated {csv_path} with {len(audio_files)} audio files processed")
 
 # === SCRIPT ENTRYPOINT ===
 if __name__ == "__main__":
