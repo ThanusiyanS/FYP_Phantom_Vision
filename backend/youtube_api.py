@@ -79,6 +79,8 @@ def download_youtube_videos(query, max_results=5, download_dir="data/retrieved-v
         os.makedirs(os.path.dirname(csv_path))
     results = []
     csv_rows = []
+    urls = []
+    video_names = []
     for idx, video in enumerate(videos, 1):
         video_id = f"vid_{idx:02d}"
         audio_id = f"aud_{idx:02d}"
@@ -112,6 +114,9 @@ def download_youtube_videos(query, max_results=5, download_dir="data/retrieved-v
                 "only_video_path": "",
                 "video_url": video["url"]
             })
+            # Add to urls and video_names for frontend response
+            urls.append(video["url"])
+            video_names.append(video["title"])
         else:
             print(f"Failed to download {video['title']}")
     # Write to CSV (append if exists, else create with header)
@@ -123,4 +128,4 @@ def download_youtube_videos(query, max_results=5, download_dir="data/retrieved-v
             writer.writeheader()
         for row in csv_rows:
             writer.writerow(row)
-    return results
+    return {"urls": urls, "video_names": video_names, "results": results}

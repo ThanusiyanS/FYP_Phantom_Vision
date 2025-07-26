@@ -11,7 +11,7 @@ WORKDIR /app
 
 # Copy backend code and requirements
 COPY . /app
-COPY ../requirements.txt /app/requirements.txt
+COPY requirements.txt /app/requirements.txt
 
 # Install Python dependencies
 RUN pip install --upgrade pip
