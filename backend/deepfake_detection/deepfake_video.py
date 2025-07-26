@@ -107,7 +107,12 @@ if os.path.exists(CSV_PATH):
         if match.any():
             df.loc[match, "avg_video_deepfake_score"] = vrow["avg_video_deepfake_score"]
             df.loc[match, "deepfake_prediction_score"] = pred_score
-            df.loc[match, "deepfake_prediction_label"] = pred_label
+            # Conservative update: only update if existing label is "0" and new label is "1"
+            existing_label = df.loc[match, "deepfake_prediction_label"].iloc[0]
+            if existing_label == "0" and pred_label == "1":
+                df.loc[match, "deepfake_prediction_label"] = pred_label
+            elif existing_label == "":
+                df.loc[match, "deepfake_prediction_label"] = pred_label
         else:
             # Add as new row with new resource_id
             existing_ids = df["resource_id"].dropna().tolist()
@@ -137,5 +142,7 @@ else:
     video_df["avg_audio_deepfake_score"] = ""
     video_df["avg_voice_deepfake_score"] = ""
     video_df["avg_face_deepfake_score"] = ""
+    video_df["deepfake_prediction_score"] = ""
+    video_df["deepfake_prediction_label"] = ""
     video_df = video_df[csv_columns]
     video_df.to_csv(CSV_PATH, index=False)

@@ -162,7 +162,12 @@ def process_directory_and_save_csv(audio_dir, model_path):
             if video_file:
                 df.loc[match, "video_file"] = video_file
             df.loc[match, "deepfake_prediction_score"] = pred_score
-            df.loc[match, "deepfake_prediction_label"] = pred_label
+            # Conservative update: only update if existing label is "0" and new label is "1"
+            existing_label = df.loc[match, "deepfake_prediction_label"].iloc[0]
+            if existing_label == "0" and pred_label == "1":
+                df.loc[match, "deepfake_prediction_label"] = pred_label
+            elif existing_label == "":
+                df.loc[match, "deepfake_prediction_label"] = pred_label
         else:
             # Add new row with new resource_id
             existing_ids = df["resource_id"].dropna().tolist()
