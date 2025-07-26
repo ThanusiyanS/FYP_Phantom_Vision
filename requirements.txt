@@ -13,6 +13,7 @@ pandas
 moviepy
 torch
 torchvision
+torchaudio
 yt-dlp
 librosa
 soundfile
@@ -20,3 +21,6 @@ transformers
 opencv-python
 webrtcvad
 tensorflow==2.15.0
+efficientnet-pytorch
+albumentations
+matplotlib
