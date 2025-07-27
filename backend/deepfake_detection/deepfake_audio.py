@@ -92,18 +92,8 @@ def process_audio_for_deepfake_in_memory(audio_path, model, device, chunk_length
     if all_chunks_have_voice:
         avg_score = 0.0
     elif non_voice_scores:
-        # Cluster the scores and use the mean of the largest cluster
-        if len(non_voice_scores) == 1:
-            avg_score = non_voice_scores[0]
-        else:
-            X = np.array(non_voice_scores).reshape(-1, 1)
-            kmeans = KMeans(n_clusters=2, random_state=0, n_init=10)
-            labels = kmeans.fit_predict(X)
-            # Find the largest cluster
-            unique, counts = np.unique(labels, return_counts=True)
-            largest_cluster = unique[np.argmax(counts)]
-            cluster_scores = X[labels == largest_cluster].flatten()
-            avg_score = float(np.mean(cluster_scores))
+        # Get the maximum score from all chunks instead of clustering
+        avg_score = max(non_voice_scores)
     else:
         avg_score = 0.0
     return avg_score
@@ -122,7 +112,7 @@ def process_directory_and_save_csv(audio_dir, model_path):
         "resource_id", "audio_file", "video_file", 
         "avg_audio_deepfake_score", "avg_voice_deepfake_score", 
         "avg_video_deepfake_score", "avg_face_deepfake_score",
-        "deepfake_prediction_score", "deepfake_prediction_label"
+        "is_audio_deepfake", "is_video_deepfake"
     ]
     
     # Load existing CSV or create new one
@@ -144,30 +134,40 @@ def process_directory_and_save_csv(audio_dir, model_path):
     
     for audio_file in audio_files:
         audio_path = os.path.join(audio_dir, audio_file)
+        print(f"Processing {audio_file}...")
         avg_score = process_audio_for_deepfake_in_memory(audio_path, model, device, chunk_length=10)
+        print(f"Average score: {avg_score:.4f}")
         
         # Check if corresponding video file exists
         video_file_candidate = os.path.splitext(audio_file)[0] + ".mp4"
         video_file_path = os.path.join(video_dir, video_file_candidate)
         video_file = video_file_candidate if os.path.exists(video_file_path) else ""
         
+        # Get base name without extension for matching
+        audio_base_name = os.path.splitext(audio_file)[0]
+        
         # Check if audio_file already exists in CSV
-        match = df["audio_file"] == audio_file
+        audio_match = df["audio_file"] == audio_file
+        
+        # Check if video_file with same base name exists in CSV
+        video_match = df["video_file"].apply(lambda x: os.path.splitext(x)[0] if isinstance(x, str) and x else "") == audio_base_name
+        
         pred_score = round(avg_score, 4)
         pred_label = "1" if pred_score > 0.63 else "0"
-        if match.any():
-            # Update existing row
-            df.loc[match, "avg_audio_deepfake_score"] = pred_score
-            df.loc[match, "avg_voice_deepfake_score"] = pred_score
+        is_audio_deepfake = 1 if pred_score > 0.63 else 0
+        
+        if audio_match.any():
+            # Update existing row by audio_file
+            df.loc[audio_match, "avg_audio_deepfake_score"] = pred_score
+            df.loc[audio_match, "avg_voice_deepfake_score"] = 0
+            df.loc[audio_match, "is_audio_deepfake"] = is_audio_deepfake
             if video_file:
-                df.loc[match, "video_file"] = video_file
-            df.loc[match, "deepfake_prediction_score"] = pred_score
-            # Conservative update: only update if existing label is "0" and new label is "1"
-            existing_label = df.loc[match, "deepfake_prediction_label"].iloc[0]
-            if existing_label == "0" and pred_label == "1":
-                df.loc[match, "deepfake_prediction_label"] = pred_label
-            elif existing_label == "":
-                df.loc[match, "deepfake_prediction_label"] = pred_label
+                df.loc[audio_match, "video_file"] = video_file
+        elif video_match.any():
+            # Update existing row by video_file base name match
+            df.loc[video_match, "avg_audio_deepfake_score"] = pred_score
+            df.loc[video_match, "audio_file"] = audio_file
+            df.loc[video_match, "is_audio_deepfake"] = is_audio_deepfake
         else:
             # Add new row with new resource_id
             existing_ids = df["resource_id"].dropna().tolist()
@@ -182,9 +182,11 @@ def process_directory_and_save_csv(audio_dir, model_path):
             new_row["audio_file"] = audio_file
             new_row["video_file"] = video_file
             new_row["avg_audio_deepfake_score"] = pred_score
-            new_row["avg_voice_deepfake_score"] = pred_score
-            new_row["deepfake_prediction_score"] = pred_score
-            new_row["deepfake_prediction_label"] = pred_label
+            new_row["avg_voice_deepfake_score"] = 0
+            new_row["avg_video_deepfake_score"] = 0
+            new_row["avg_face_deepfake_score"] = 0
+            new_row["is_audio_deepfake"] = is_audio_deepfake
+            new_row["is_video_deepfake"] = 0
             df = pd.concat([df, pd.DataFrame([new_row])], ignore_index=True)
     
     # Save updated CSV

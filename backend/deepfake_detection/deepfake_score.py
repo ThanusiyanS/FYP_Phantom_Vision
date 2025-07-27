@@ -23,11 +23,18 @@ def calculate_final_deepfake_score():
     df['avg_audio_deepfake_score'] = pd.to_numeric(df['avg_audio_deepfake_score'], errors='coerce').fillna(0)
     df['avg_video_deepfake_score'] = pd.to_numeric(df['avg_video_deepfake_score'], errors='coerce').fillna(0)
     
+    # Ensure is_audio_deepfake and is_video_deepfake are present and numeric
+    df['is_audio_deepfake'] = pd.to_numeric(df.get('is_audio_deepfake', 0), errors='coerce').fillna(0).astype(int)
+    df['is_video_deepfake'] = pd.to_numeric(df.get('is_video_deepfake', 0), errors='coerce').fillna(0).astype(int)
+    
     # Calculate final deepfake score by selecting the higher value
     df['final_deepfake_score'] = df[['avg_audio_deepfake_score', 'avg_video_deepfake_score']].max(axis=1)
     
+    # Calculate deepfake_label using OR logic
+    df['deepfake_label'] = ((df['is_audio_deepfake'] == 1) | (df['is_video_deepfake'] == 1)).astype(int)
+    
     # Create output DataFrame with required columns
-    output_df = df[['resource_id', 'audio_file', 'video_file', 'final_deepfake_score']].copy()
+    output_df = df[['resource_id', 'audio_file', 'video_file', 'final_deepfake_score', 'deepfake_label']].copy()
     
     # Round the final score to 4 decimal places
     output_df['final_deepfake_score'] = output_df['final_deepfake_score'].round(4)
