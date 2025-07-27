@@ -82,8 +82,8 @@ def download_youtube_videos(query, max_results=5, download_dir="data/retrieved-v
     urls = []
     video_names = []
     for idx, video in enumerate(videos, 1):
-        video_id = f"vid_{idx:02d}"
-        audio_id = f"aud_{idx:02d}"
+        video_id = f"item_{idx:02d}"
+        audio_id = f"item_{idx:02d}"
         # Set new video filename
         video_filename = f"{video_id}.mp4"
         video_path = os.path.join(download_dir, video_filename)

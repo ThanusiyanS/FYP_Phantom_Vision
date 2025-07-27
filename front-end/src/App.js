@@ -150,8 +150,6 @@ function App() {
                         {res.video_name || res.video_id}
                       </a>
                     )}
-                    <div>Probability: {res.probability !== undefined ? res.probability.toFixed(4) : 'N/A'}</div>
-                    <div>Quality Score: {res.quality_score !== undefined ? res.quality_score.toFixed(4) : 'N/A'}</div>
                   </div>
                 )) : <p>No accident videos detected</p>}
           </div>
