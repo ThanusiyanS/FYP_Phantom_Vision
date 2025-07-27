@@ -14,6 +14,11 @@ import csv as pycsv
 from sklearn.cluster import KMeans
 import pandas as pd
 
+
+script_dir = os.path.dirname(os.path.abspath(__file__))
+audio_dir = os.path.join(script_dir, "..", "data", "extracted-audios")
+model_path = os.path.join(script_dir, "fine_tuned_audio_model_v3.pth")
+
 # === MODEL ===
 class AudioModel(nn.Module):
     def __init__(self):
@@ -109,7 +114,7 @@ def process_audio_for_deepfake_in_memory(audio_path, model, device, chunk_length
     return avg_score
 
 # === BATCH PROCESSING AND CSV OUTPUT ===
-def process_directory_and_save_csv(audio_dir, model_path):
+def process_directory_and_save_csv(audio_dir):
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     model = AudioModel().to(device)
     model.load_state_dict(torch.load(model_path, map_location=device))
@@ -189,8 +194,6 @@ def process_directory_and_save_csv(audio_dir, model_path):
 # === SCRIPT ENTRYPOINT ===
 if __name__ == "__main__":
     # Hardcoded paths
-    script_dir = os.path.dirname(os.path.abspath(__file__))
-    audio_dir = "/Users/danurahathevanayagam/Documents/UoM/L4S1/FYP/FYP/FYP_Phantom_Vision/backend/deepfake_detection/audio"
-    model_path = os.path.join(script_dir, "fine_tuned_audio_model_v3.pth")
-    process_directory_and_save_csv(audio_dir, model_path)
+
+    process_directory_and_save_csv(audio_dir)
 

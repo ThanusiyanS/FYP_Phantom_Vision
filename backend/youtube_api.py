@@ -4,6 +4,11 @@ from pytube import YouTube
 from moviepy import VideoFileClip
 import subprocess
 import csv
+import numpy as np
+import librosa
+import tensorflow_hub as hub
+import tensorflow as tf
+from tensorflow.keras.models import load_model
 
 YOUTUBE_API_KEY = "AIzaSyA0tzzM9_60mvsABUUUc31HC-wuXsr8kHc"
 
@@ -14,7 +19,8 @@ def search_youtube(query, max_results=5):
         q=query,
         part="snippet",
         maxResults=max_results,
-        type="video"
+        type="video",
+        videoDuration="short"  # Only get short videos
     )
     response = request.execute()
 
@@ -53,14 +59,15 @@ def clear_folder(folder_path):
             if os.path.isfile(file_path):
                 os.remove(file_path)
 
-def download_youtube_videos(query, max_results=5, download_dir="data/retrieved-videos", audio_dir="data/extracted-audios", csv_path="data/video_data.csv"):
+# Remove ML and quality logic, only keep download and extraction
+def download_youtube_videos(query, max_results=5, download_dir="data/retrieved-videos", audio_dir="data/extracted-audios", csv_path="data/initial_video_data.csv"):
     # Clear previous data
     clear_folder(download_dir)
     clear_folder(audio_dir)
     # Reset CSV file
     if os.path.exists(csv_path):
         with open(csv_path, 'w', newline='') as csvfile:
-            fieldnames = ["video_id", "video_url", "video_path", "probability", "is_accident"]
+            fieldnames = ["video_id", "video_path", "audio_path", "only_video_path", "video_url"]
             writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
             writer.writeheader()
     videos = search_youtube(query, max_results)
@@ -72,40 +79,53 @@ def download_youtube_videos(query, max_results=5, download_dir="data/retrieved-v
         os.makedirs(os.path.dirname(csv_path))
     results = []
     csv_rows = []
+    urls = []
+    video_names = []
     for idx, video in enumerate(videos, 1):
-        video_path = download_video_yt_dlp(video["url"], download_dir)
-        video_id = f"vid_{idx:02d}"
-        probability = None
-        is_accident = None
-        if video_path:
-            # Extract audio as before
-            audio_filename = os.path.splitext(os.path.basename(video_path))[0] + ".mp3"
+        video_id = f"item_{idx:02d}"
+        audio_id = f"item_{idx:02d}"
+        # Set new video filename
+        video_filename = f"{video_id}.mp4"
+        video_path = os.path.join(download_dir, video_filename)
+        # Download video with yt-dlp and rename
+        temp_video_path = download_video_yt_dlp(video["url"], download_dir)
+        if not temp_video_path or not os.path.exists(temp_video_path):
+            print(f"Skipping {video['title']} due to download failure.")
+            continue
+        if temp_video_path != video_path:
+            os.rename(temp_video_path, video_path)
+        if os.path.exists(video_path):
+            # Extract audio and save as audio_id.mp3
+            audio_filename = f"{audio_id}.mp3"
             audio_path = os.path.join(audio_dir, audio_filename)
             try:
                 clip = VideoFileClip(video_path)
                 clip.audio.write_audiofile(audio_path)
                 clip.close()
-                print(f"Extracted audio for {os.path.basename(video_path)}")
+                print(f"Extracted audio for {video_filename}")
             except Exception as e:
-                print(f"Failed to extract audio for {os.path.basename(video_path)}: {e}")
+                print(f"Failed to extract audio for {video_filename}: {e}")
                 audio_path = None
-            results.append({"video_path": video_path, "audio_path": audio_path})
+            results.append({"video_id": video_id, "video_path": video_path, "audio_path": audio_path, "only_video_path": "", "video_url": video["url"]})
             csv_rows.append({
                 "video_id": video_id,
-                "video_url": video["url"],
                 "video_path": video_path,
-                "probability": probability,
-                "is_accident": is_accident
+                "audio_path": audio_path,
+                "only_video_path": "",
+                "video_url": video["url"]
             })
+            # Add to urls and video_names for frontend response
+            urls.append(video["url"])
+            video_names.append(video["title"])
         else:
             print(f"Failed to download {video['title']}")
     # Write to CSV (append if exists, else create with header)
     write_header = not os.path.exists(csv_path)
     with open(csv_path, mode='a', newline='') as csvfile:
-        fieldnames = ["video_id", "video_url", "video_path", "probability", "is_accident"]
+        fieldnames = ["video_id", "video_path", "audio_path", "only_video_path", "video_url"]
         writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
         if write_header:
             writer.writeheader()
         for row in csv_rows:
             writer.writerow(row)
-    return results
+    return {"urls": urls, "video_names": video_names, "results": results}
