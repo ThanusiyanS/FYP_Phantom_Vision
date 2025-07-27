@@ -10,7 +10,7 @@ import tensorflow_hub as hub
 import tensorflow as tf
 from tensorflow.keras.models import load_model
 
-YOUTUBE_API_KEY = "AIzaSyA0tzzM9_60mvsABUUUc31HC-wuXsr8kHc"
+YOUTUBE_API_KEY = 
 
 
 def search_youtube(query, max_results=5):
