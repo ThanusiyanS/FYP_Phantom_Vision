@@ -247,7 +247,6 @@ for idx, video_file in enumerate(sorted(os.listdir(VIDEO_DIR)), 1):
 csv_columns = [
     "resource_id", "audio_file", "video_file", "avg_audio_deepfake_score", 
     "avg_voice_deepfake_score", "avg_video_deepfake_score", "avg_face_deepfake_score", 
-    "deepfake_prediction_score", "deepfake_prediction_label",
     "is_audio_deepfake", "is_video_deepfake"
 ]
 
@@ -274,22 +273,18 @@ if os.path.exists(CSV_PATH):
         audio_match = df["audio_file"].apply(lambda x: os.path.splitext(x)[0] if isinstance(x, str) and x else "") == video_base_name
         
         pred_score = round(vrow["avg_video_deepfake_score"], 4) if vrow["avg_video_deepfake_score"] != "" else ""
-        pred_label = "1" if pred_score != "" and pred_score > 0.65 else ("0" if pred_score != "" else "")
-        is_video_deepfake = 1 if pred_score != "" and pred_score > 0.65 else 0
+        pred_label = "1" if pred_score != "" and pred_score > 0.68 else ("0" if pred_score != "" else "")
+        is_video_deepfake = 1 if pred_score != "" and pred_score > 0.68 else 0
         
         if video_match.any():
             # Update existing row by video_file
             df.loc[video_match, "avg_video_deepfake_score"] = vrow["avg_video_deepfake_score"]
             df.loc[video_match, "is_video_deepfake"] = is_video_deepfake
-            df.loc[video_match, "deepfake_prediction_score"] = 0
-            df.loc[video_match, "deepfake_prediction_label"] = 0
         elif audio_match.any():
             # Update existing row by audio_file base name match
             df.loc[audio_match, "avg_video_deepfake_score"] = vrow["avg_video_deepfake_score"]
             df.loc[audio_match, "video_file"] = video_file
             df.loc[audio_match, "is_video_deepfake"] = is_video_deepfake
-            df.loc[audio_match, "deepfake_prediction_score"] = 0
-            df.loc[audio_match, "deepfake_prediction_label"] = 0
         else:
             # Add as new row with new resource_id
             existing_ids = df["resource_id"].dropna().tolist()
@@ -306,8 +301,6 @@ if os.path.exists(CSV_PATH):
             new_row["avg_audio_deepfake_score"] = 0
             new_row["avg_voice_deepfake_score"] = 0
             new_row["avg_face_deepfake_score"] = 0
-            new_row["deepfake_prediction_score"] = 0
-            new_row["deepfake_prediction_label"] = 0
             new_row["is_audio_deepfake"] = 0
             new_row["is_video_deepfake"] = is_video_deepfake
             df = pd.concat([df, pd.DataFrame([new_row])], ignore_index=True)
@@ -322,11 +315,9 @@ else:
     video_df["avg_audio_deepfake_score"] = 0
     video_df["avg_voice_deepfake_score"] = 0
     video_df["avg_face_deepfake_score"] = 0
-    video_df["deepfake_prediction_score"] = 0
-    video_df["deepfake_prediction_label"] = 0
     video_df["is_audio_deepfake"] = 0
     # Set is_video_deepfake based on video scores
-    video_df["is_video_deepfake"] = video_df["avg_video_deepfake_score"].apply(lambda x: 1 if x > 0.65 else 0)
+    video_df["is_video_deepfake"] = video_df["avg_video_deepfake_score"].apply(lambda x: 1 if x > 0.68 else 0)
     video_df = video_df[csv_columns]
     video_df.to_csv(CSV_PATH, index=False)
     print(f"Created {CSV_PATH} with {len(results)} video files processed")
