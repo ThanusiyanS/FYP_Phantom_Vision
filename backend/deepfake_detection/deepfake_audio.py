@@ -19,7 +19,7 @@ os.environ["TFHUB_CACHE_DIR"] = "./tfhub_cache"  # Local folder to avoid system 
 
 script_dir = os.path.dirname(os.path.abspath(__file__))
 audio_dir = os.path.join(script_dir, "audio")
-model_path = os.path.join(script_dir, "fine_tuned_audio_model_v3.pth")
+model_path = os.path.join(script_dir, "audio_deepfake_detection_model_v3.pth")
 
 # === MODEL ===
 class AudioModel(nn.Module):
@@ -160,8 +160,8 @@ def process_directory_and_save_csv(audio_dir):
         video_match = df["video_file"].apply(lambda x: os.path.splitext(x)[0] if isinstance(x, str) and x else "") == audio_base_name
         
         pred_score = round(avg_score, 4)
-        pred_label = "1" if pred_score > 0.65 else "0"
-        is_audio_deepfake = 1 if pred_score > 0.65 else 0
+        pred_label = "1" if pred_score > 0.52 else "0"
+        is_audio_deepfake = 1 if pred_score > 0.52 else 0
         
         if audio_match.any():
             # Update existing row by audio_file

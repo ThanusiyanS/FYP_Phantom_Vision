@@ -1,7 +1,7 @@
 import pandas as pd
 import os
 
-def compute_final_deepfake_score(audio_score, video_score, audio_thresh=0.65, video_thresh=0.68):
+def compute_final_deepfake_score(audio_score, video_score, audio_thresh=0.52, video_thresh=0.68):
     """
     Compute final deepfake score based on weighted combination of audio and video scores.
     Weights are inversely proportional to thresholds (lower threshold = more confident modality).
