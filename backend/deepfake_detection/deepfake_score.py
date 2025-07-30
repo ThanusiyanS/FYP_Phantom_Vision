@@ -1,10 +1,24 @@
 import pandas as pd
 import os
 
+def compute_final_deepfake_score(audio_score, video_score, audio_thresh=0.52, video_thresh=0.68):
+    """
+    Compute final deepfake score based on weighted combination of audio and video scores.
+    Weights are inversely proportional to thresholds (lower threshold = more confident modality).
+    """
+    inv_audio = 1 / audio_thresh
+    inv_video = 1 / video_thresh
+
+    weight_audio = inv_audio / (inv_audio + inv_video)
+    weight_video = 1 - weight_audio
+
+    final_score = (weight_audio * audio_score) + (weight_video * video_score)
+    return round(final_score, 4), weight_audio, weight_video
+
 def calculate_final_deepfake_score():
     """
-    Calculate final deepfake score by comparing audio and video scores
-    and selecting the higher value for each resource_id
+    Calculate final deepfake score by applying weighted combination of audio and video scores
+    based on their respective thresholds
     """
     # Path to the input CSV file
     input_csv_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "deepfake_score.csv")
@@ -27,17 +41,29 @@ def calculate_final_deepfake_score():
     df['is_audio_deepfake'] = pd.to_numeric(df.get('is_audio_deepfake', 0), errors='coerce').fillna(0).astype(int)
     df['is_video_deepfake'] = pd.to_numeric(df.get('is_video_deepfake', 0), errors='coerce').fillna(0).astype(int)
     
-    # Calculate final deepfake score by selecting the higher value
-    df['final_deepfake_score'] = df[['avg_audio_deepfake_score', 'avg_video_deepfake_score']].max(axis=1)
+    # Calculate final deepfake score using weighted combination based on thresholds
+    final_scores = []
+    audio_weights = []
+    video_weights = []
+    
+    for _, row in df.iterrows():
+        audio_score = row['avg_audio_deepfake_score']
+        video_score = row['avg_video_deepfake_score']
+        
+        final_score, weight_audio, weight_video = compute_final_deepfake_score(audio_score, video_score)
+        final_scores.append(final_score)
+        audio_weights.append(weight_audio)
+        video_weights.append(weight_video)
+    
+    df['final_deepfake_score'] = final_scores
+    df['audio_weight'] = audio_weights
+    df['video_weight'] = video_weights
     
     # Calculate deepfake_label using OR logic
     df['deepfake_label'] = ((df['is_audio_deepfake'] == 1) | (df['is_video_deepfake'] == 1)).astype(int)
     
     # Create output DataFrame with required columns
     output_df = df[['resource_id', 'audio_file', 'video_file', 'final_deepfake_score', 'deepfake_label']].copy()
-    
-    # Round the final score to 4 decimal places
-    output_df['final_deepfake_score'] = output_df['final_deepfake_score'].round(4)
     
     # Save to new CSV file
     output_df.to_csv(output_csv_path, index=False)
