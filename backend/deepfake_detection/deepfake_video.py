@@ -228,96 +228,131 @@ def predict_deepfake(video_path, chunk_duration=10):
     return avg_score
 
 # --- PROCESS ALL VIDEOS ---
-results = []
-for idx, video_file in enumerate(sorted(os.listdir(VIDEO_DIR)), 1):
-    if video_file.endswith(".mp4"):
-        video_path = os.path.join(VIDEO_DIR, video_file)
-        print(f"Processing {video_file}...")
-        score = predict_deepfake(video_path)
-        if score is not None:
-            results.append({
-                "video_file": video_file,
-                "avg_video_deepfake_score": round(score, 4)
-            })
-            print(f"Score: {score:.4f}")
-        else:
-            print(f"Skipped {video_file} (too short or processing failed)")
+def process_all_videos():
+    """Process all video files in the VIDEO_DIR and return results"""
+    results = []
+    for idx, video_file in enumerate(sorted(os.listdir(VIDEO_DIR)), 1):
+        if video_file.endswith(".mp4"):
+            video_path = os.path.join(VIDEO_DIR, video_file)
+            print(f"Processing {video_file}...")
+            score = predict_deepfake(video_path)
+            if score is not None:
+                results.append({
+                    "video_file": video_file,
+                    "avg_video_deepfake_score": round(score, 4)
+                })
+                print(f"Score: {score:.4f}")
+            else:
+                print(f"Skipped {video_file} (too short or processing failed)")
+    return results
 
-# --- UPDATE OR CREATE CSV ---
-csv_columns = [
-    "resource_id", "audio_file", "video_file", "avg_audio_deepfake_score", 
-    "avg_voice_deepfake_score", "avg_video_deepfake_score", "avg_face_deepfake_score", 
-    "is_audio_deepfake", "is_video_deepfake"
-]
+def update_csv_with_results(results):
+    """Update or create CSV file with video processing results"""
+    csv_columns = [
+        "resource_id", "audio_file", "video_file", "avg_audio_deepfake_score", 
+        "avg_voice_deepfake_score", "avg_video_deepfake_score", "avg_face_deepfake_score", 
+        "is_audio_deepfake", "is_video_deepfake"
+    ]
 
-if os.path.exists(CSV_PATH):
-    df = pd.read_csv(CSV_PATH)
-    # Ensure required columns exist
-    for col in csv_columns:
-        if col not in df.columns:
-            df[col] = ""
-    # Reorder columns if necessary
-    df = df[csv_columns]
+    if os.path.exists(CSV_PATH):
+        df = pd.read_csv(CSV_PATH)
+        # Ensure required columns exist
+        for col in csv_columns:
+            if col not in df.columns:
+                df[col] = ""
+        # Reorder columns if necessary
+        df = df[csv_columns]
+        
+        video_df = pd.DataFrame(results)
+        
+        # Update matching rows
+        for i, vrow in video_df.iterrows():
+            video_file = vrow["video_file"]
+            video_base_name = os.path.splitext(video_file)[0]
+            
+            # Check if video_file already exists in CSV
+            video_match = df["video_file"] == video_file
+            
+            # Check if audio_file with same base name exists in CSV
+            audio_match = df["audio_file"].apply(lambda x: os.path.splitext(x)[0] if isinstance(x, str) and x else "") == video_base_name
+            
+            pred_score = round(vrow["avg_video_deepfake_score"], 4) if vrow["avg_video_deepfake_score"] != "" else ""
+            pred_label = "1" if pred_score != "" and pred_score > 0.68 else ("0" if pred_score != "" else "")
+            is_video_deepfake = 1 if pred_score != "" and pred_score > 0.68 else 0
+            
+            if video_match.any():
+                # Update existing row by video_file
+                df.loc[video_match, "avg_video_deepfake_score"] = vrow["avg_video_deepfake_score"]
+                df.loc[video_match, "is_video_deepfake"] = is_video_deepfake
+            elif audio_match.any():
+                # Update existing row by audio_file base name match
+                df.loc[audio_match, "avg_video_deepfake_score"] = vrow["avg_video_deepfake_score"]
+                df.loc[audio_match, "video_file"] = video_file
+                df.loc[audio_match, "is_video_deepfake"] = is_video_deepfake
+            else:
+                # Add as new row with new resource_id
+                existing_ids = df["resource_id"].dropna().tolist()
+                next_id = 1
+                if existing_ids:
+                    nums = [int(str(i).replace("vid_", "").replace("resource_", "")) for i in existing_ids if (str(i).startswith("vid_") or str(i).startswith("resource_")) and str(i).replace("vid_", "").replace("resource_", "").isdigit()]
+                    if nums:
+                        next_id = max(nums) + 1
+                new_resource_id = f"resource_{next_id:02d}"
+                new_row = {col: "" for col in csv_columns}
+                new_row["resource_id"] = new_resource_id
+                new_row["video_file"] = video_file
+                new_row["avg_video_deepfake_score"] = vrow["avg_video_deepfake_score"]
+                new_row["avg_audio_deepfake_score"] = 0
+                new_row["avg_voice_deepfake_score"] = 0
+                new_row["avg_face_deepfake_score"] = 0
+                new_row["is_audio_deepfake"] = 0
+                new_row["is_video_deepfake"] = is_video_deepfake
+                df = pd.concat([df, pd.DataFrame([new_row])], ignore_index=True)
+        
+        df.to_csv(CSV_PATH, index=False)
+        print(f"Updated {CSV_PATH} with {len(results)} video files processed")
+    else:
+        # If no CSV exists, just write the video results with new resource_ids
+        video_df = pd.DataFrame(results)
+        video_df["resource_id"] = [f"resource_{i+1:02d}" for i in range(len(video_df))]
+        video_df["audio_file"] = ""
+        video_df["avg_audio_deepfake_score"] = 0
+        video_df["avg_voice_deepfake_score"] = 0
+        video_df["avg_face_deepfake_score"] = 0
+        video_df["is_audio_deepfake"] = 0
+        # Set is_video_deepfake based on video scores
+        video_df["is_video_deepfake"] = video_df["avg_video_deepfake_score"].apply(lambda x: 1 if x > 0.68 else 0)
+        video_df = video_df[csv_columns]
+        video_df.to_csv(CSV_PATH, index=False)
+        print(f"Created {CSV_PATH} with {len(results)} video files processed")
+
+def deepfake_video_detection_pipeline():
+    """Main function to orchestrate the entire video deepfake detection process"""
+    print("Starting video deepfake detection process...")
     
-    video_df = pd.DataFrame(results)
+    # Check if video directory exists
+    if not os.path.exists(VIDEO_DIR):
+        print(f"Video directory not found: {VIDEO_DIR}")
+        return
     
-    # Update matching rows
-    for i, vrow in video_df.iterrows():
-        video_file = vrow["video_file"]
-        video_base_name = os.path.splitext(video_file)[0]
-        
-        # Check if video_file already exists in CSV
-        video_match = df["video_file"] == video_file
-        
-        # Check if audio_file with same base name exists in CSV
-        audio_match = df["audio_file"].apply(lambda x: os.path.splitext(x)[0] if isinstance(x, str) and x else "") == video_base_name
-        
-        pred_score = round(vrow["avg_video_deepfake_score"], 4) if vrow["avg_video_deepfake_score"] != "" else ""
-        pred_label = "1" if pred_score != "" and pred_score > 0.68 else ("0" if pred_score != "" else "")
-        is_video_deepfake = 1 if pred_score != "" and pred_score > 0.68 else 0
-        
-        if video_match.any():
-            # Update existing row by video_file
-            df.loc[video_match, "avg_video_deepfake_score"] = vrow["avg_video_deepfake_score"]
-            df.loc[video_match, "is_video_deepfake"] = is_video_deepfake
-        elif audio_match.any():
-            # Update existing row by audio_file base name match
-            df.loc[audio_match, "avg_video_deepfake_score"] = vrow["avg_video_deepfake_score"]
-            df.loc[audio_match, "video_file"] = video_file
-            df.loc[audio_match, "is_video_deepfake"] = is_video_deepfake
-        else:
-            # Add as new row with new resource_id
-            existing_ids = df["resource_id"].dropna().tolist()
-            next_id = 1
-            if existing_ids:
-                nums = [int(str(i).replace("vid_", "").replace("resource_", "")) for i in existing_ids if (str(i).startswith("vid_") or str(i).startswith("resource_")) and str(i).replace("vid_", "").replace("resource_", "").isdigit()]
-                if nums:
-                    next_id = max(nums) + 1
-            new_resource_id = f"resource_{next_id:02d}"
-            new_row = {col: "" for col in csv_columns}
-            new_row["resource_id"] = new_resource_id
-            new_row["video_file"] = video_file
-            new_row["avg_video_deepfake_score"] = vrow["avg_video_deepfake_score"]
-            new_row["avg_audio_deepfake_score"] = 0
-            new_row["avg_voice_deepfake_score"] = 0
-            new_row["avg_face_deepfake_score"] = 0
-            new_row["is_audio_deepfake"] = 0
-            new_row["is_video_deepfake"] = is_video_deepfake
-            df = pd.concat([df, pd.DataFrame([new_row])], ignore_index=True)
+    # Check if model file exists
+    if not os.path.exists(MODEL_PATH):
+        print(f"Model file not found: {MODEL_PATH}")
+        return
     
-    df.to_csv(CSV_PATH, index=False)
-    print(f"Updated {CSV_PATH} with {len(results)} video files processed")
-else:
-    # If no CSV exists, just write the video results with new resource_ids
-    video_df = pd.DataFrame(results)
-    video_df["resource_id"] = [f"resource_{i+1:02d}" for i in range(len(video_df))]
-    video_df["audio_file"] = ""
-    video_df["avg_audio_deepfake_score"] = 0
-    video_df["avg_voice_deepfake_score"] = 0
-    video_df["avg_face_deepfake_score"] = 0
-    video_df["is_audio_deepfake"] = 0
-    # Set is_video_deepfake based on video scores
-    video_df["is_video_deepfake"] = video_df["avg_video_deepfake_score"].apply(lambda x: 1 if x > 0.68 else 0)
-    video_df = video_df[csv_columns]
-    video_df.to_csv(CSV_PATH, index=False)
-    print(f"Created {CSV_PATH} with {len(results)} video files processed")
+    # Process all videos
+    print(f"Processing videos from: {VIDEO_DIR}")
+    results = process_all_videos()
+    
+    if not results:
+        print("No videos were successfully processed.")
+        return
+    
+    # Update CSV with results
+    print(f"Updating CSV with {len(results)} processed videos...")
+    update_csv_with_results(results)
+    
+    print("Video deepfake detection process completed successfully!")
+
+if __name__ == "__main__":
+    deepfake_video_detection_pipeline()
