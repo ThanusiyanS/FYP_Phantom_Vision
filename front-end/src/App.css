@@ -36,3 +36,58 @@
     transform: rotate(360deg);
   }
 }
+
+/* Custom styles for prediction results */
+.prediction-card {
+  transition: transform 0.2s ease-in-out;
+}
+
+.prediction-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+}
+
+.accident-badge {
+  background-color: #dc3545 !important;
+  color: white !important;
+}
+
+.no-accident-badge {
+  background-color: #28a745 !important;
+  color: white !important;
+}
+
+.deepfake-badge {
+  background-color: #ffc107 !important;
+  color: black !important;
+}
+
+.real-badge {
+  background-color: #6c757d !important;
+  color: white !important;
+}
+
+.stats-bar {
+  background-color: rgba(255,255,255,0.1);
+  padding: 8px 12px;
+  border-radius: 6px;
+  margin-bottom: 15px;
+  font-size: 12px;
+  color: #ccc;
+}
+
+.loading-spinner {
+  border: 3px solid #f3f3f3;
+  border-top: 3px solid #3498db;
+  border-radius: 50%;
+  width: 20px;
+  height: 20px;
+  animation: spin 1s linear infinite;
+  display: inline-block;
+  margin-right: 10px;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}

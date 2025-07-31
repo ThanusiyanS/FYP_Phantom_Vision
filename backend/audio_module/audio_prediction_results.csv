@@ -1,0 +1,11 @@
+video_id,audio_file,error,probability,is_accident,quality_score,video_url
+item_03,item_03.mp3,,0.898081051905231,True,0.0,https://www.youtube.com/watch?v=f7ZQi7dh_-w
+item_02,item_02.mp3,,0.7409019356678783,True,0.687602816998553,https://www.youtube.com/watch?v=W2_-UtHeYu8
+item_01,item_01.mp3,,0.5538809417669698,True,0.6758633780600135,https://www.youtube.com/watch?v=UnB6OrVRN_Q
+item_05,item_05.mp3,,0.8970737542397299,True,0.6883559718626696,https://www.youtube.com/watch?v=oWop55wsVTo
+item_10,item_10.mp3,,0.488198093972395,False,0.0,https://www.youtube.com/watch?v=uKHe9_3qRV4
+item_04,item_04.mp3,,0.803732542036994,True,0.0,https://www.youtube.com/watch?v=ZqByRRQNhnA
+item_06,item_06.mp3,,0.8744482273835124,True,0.7084641993856754,https://www.youtube.com/watch?v=jvH7WwPhpA8
+item_07,item_07.mp3,,0.7659602403795867,True,0.7237403579309684,https://www.youtube.com/watch?v=o_gWJX1EyWY
+item_09,item_09.mp3,,0.8828045625571248,True,0.7651869252247018,https://www.youtube.com/watch?v=0WdTA_OQjfQ
+item_08,item_08.mp3,,0.5431164674209427,True,0.8051573528724463,https://www.youtube.com/watch?v=cTRVer_7LrY
