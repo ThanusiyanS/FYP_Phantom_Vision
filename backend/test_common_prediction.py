@@ -63,7 +63,7 @@ def test_imports():
         print(f"❌ Failed to import deepfake_detection.deepfake_audio: {e}")
     
     try:
-        from deepfake_detection.deepfake_video import process_videos_and_update_csv
+        from deepfake_detection.deepfake_video import deepfake_video_detection_pipeline
         print("✅ deepfake_detection.deepfake_video imported successfully")
     except Exception as e:
         print(f"❌ Failed to import deepfake_detection.deepfake_video: {e}")

@@ -20,7 +20,7 @@ sys.path.append(os.path.join(script_dir, 'deepfake_detection'))
 from video_module.run_inference import analyze_videos
 from audio_module.predict import predict_and_quality_return_with_csv, get_all_audio_paths
 from deepfake_detection.deepfake_audio import process_directory_and_save_csv
-from deepfake_detection.deepfake_video import process_videos_and_update_csv
+from deepfake_detection.deepfake_video import deepfake_video_detection_pipeline
 from deepfake_detection.deepfake_score import calculate_final_deepfake_score
 
 # Configuration
@@ -328,7 +328,7 @@ def run_deepfake_detection():
         # Step 3b: Video Deepfake Detection
         print("\n--- 3b: Video Deepfake Detection ---")
         try:
-            success = process_videos_and_update_csv()
+            success = deepfake_video_detection_pipeline()
             if success:
                 results['video_deepfake'] = {
                     'success': True,
@@ -603,6 +603,7 @@ def get_integrated_results():
             # Calculate deepfake quality component (deduct from 1 to invert the relationship)
             # Higher deepfake score = lower quality, so we invert it
             deepfake_quality = 1.0 - deepfake_score
+            
             
             # Calculate weighted average quality score
             # Weights: video_quality (0.5), audio_quality (0.3), deepfake_quality (0.2)

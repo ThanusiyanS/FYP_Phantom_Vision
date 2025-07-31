@@ -46,9 +46,9 @@ backend/deepfake_detection/audio_deepfake_detection_model_v3.pth
 backend/video_module/model/
 # VSCode
 .vscode/
-# backend/deepfake_detection/audio
-# backend/deepfake_detection/video
-# backend/deepfake_detection/video
+backend/deepfake_detection/audio
+backend/deepfake_detection/video
+backend/deepfake_detection/video
 
 #icpr2020dfdc
 .idea/
