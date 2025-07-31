@@ -17,7 +17,7 @@ except ImportError:
     print("Warning: pytesseract not available. OCR-based text removal will be skipped.")
 
 # --- CONFIG ---
-VIDEO_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "video")
+VIDEO_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..","data","retrieved-videos")
 CSV_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), "deepfake_score.csv")
 MODEL_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), "fine_tuned_video_model_v4.pth")
 DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")

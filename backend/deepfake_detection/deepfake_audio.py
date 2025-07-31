@@ -18,7 +18,7 @@ os.environ["TFHUB_CACHE_DIR"] = "./tfhub_cache"  # Local folder to avoid system 
 
 
 script_dir = os.path.dirname(os.path.abspath(__file__))
-audio_dir = os.path.join(script_dir, "audio")
+audio_dir = os.path.join(script_dir, "..","data","extracted-audios")
 model_path = os.path.join(script_dir, "audio_deepfake_detection_model_v3.pth")
 
 # === MODEL ===
