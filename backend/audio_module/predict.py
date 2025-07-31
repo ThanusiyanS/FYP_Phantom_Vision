@@ -9,6 +9,22 @@ if not hasattr(tf, '__version__'):
 
 import tensorflow_hub as hub
 import os
+import shutil
+
+# Configuration - Paths
+script_dir = os.path.dirname(os.path.abspath(__file__))
+AUDIO_DIR = os.path.join(script_dir, "..", "data", "extracted-audios")
+CSV_PATH = os.path.join(script_dir, "..", "data", "initial_video_data.csv")
+OUTPUT_CSV_PATH = os.path.join(script_dir,"audio_prediction_results.csv")
+
+# # Get the default cache directory
+# cache_dir = hub._get_temp_dir()
+
+# # Clear it
+# shutil.rmtree(cache_dir)
+# print(f"Cleared TensorFlow Hub cache at: {cache_dir}")
+os.environ['TFHUB_CACHE_DIR'] = '/tmp/fresh_tfhub_cache'
+
 
 yamnet_model_handle = 'https://tfhub.dev/google/yamnet/1'
 yamnet_model = hub.load(yamnet_model_handle)
@@ -53,22 +69,36 @@ def compute_audio_quality(path):
     zc_norm = min(max((zero_crossings - 1000) / (10000 - 1000), 0), 1)
     silence_norm = 1 - silence
     quality_score = (rms_norm + zc_norm + silence_norm) / 3
-    return quality_score, rms, zero_crossings, silence
+    return quality_score
 
 def get_all_audio_paths(audio_dir):
     return [os.path.join(audio_dir, f) for f in os.listdir(audio_dir) if f.endswith('.mp3')]
 
-def predict_and_quality_print(audio_paths):
+def predict_and_quality_print(audio_dir):
+    """
+    Process all audio files in the specified directory and print results.
+    
+    Args:
+        audio_dir (str): Directory containing audio files
+    """
+    audio_paths = get_all_audio_paths(audio_dir)
+    
+    if not audio_paths:
+        print(f"No audio files found in {audio_dir}")
+        return
+    
+    print(f"Processing {len(audio_paths)} audio files from {audio_dir}")
+    
     for audio_path in audio_paths:
         if not os.path.exists(audio_path):
             print(f"File not found: {audio_path}")
             continue
         video_id = os.path.splitext(os.path.basename(audio_path))[0].replace('aud', 'vid')
         prob, is_acc = predict_audio_chunks(audio_path)
-        qscore, rms, zc, silence = compute_audio_quality(audio_path)
+        qscore = compute_audio_quality(audio_path)
         print(f"{video_id}: Probability={prob:.4f}, IsAccident={is_acc}, QualityScore={qscore:.4f}")
 
-def predict_and_quality_return(audio_paths, csv_path="data/initial_video_data.csv"):
+def predict_and_quality_return(audio_paths, csv_path=CSV_PATH):
     import pandas as pd
     
     # Read the CSV to get video metadata
@@ -94,7 +124,7 @@ def predict_and_quality_return(audio_paths, csv_path="data/initial_video_data.cs
         
         video_id = os.path.splitext(os.path.basename(audio_path))[0].replace('aud', 'vid')
         prob, is_acc = predict_audio_chunks(audio_path)
-        qscore, rms, zc, silence = compute_audio_quality(audio_path)
+        qscore = compute_audio_quality(audio_path)
         
         result = {
             'video_id': video_id,
@@ -115,13 +145,127 @@ def predict_and_quality_return(audio_paths, csv_path="data/initial_video_data.cs
     
     return results
 
+def predict_and_quality_return_with_csv(audio_dir=AUDIO_DIR, csv_path=CSV_PATH):
+    """
+    Process all audio files in the specified directory and create a CSV with results.
+    
+    Args:
+        audio_dir (str): Directory containing audio files
+        csv_path (str): Path to the initial video data CSV for metadata
+    
+    Returns:
+        list: List of prediction results
+    """
+    import pandas as pd
+    from datetime import datetime
+    
+    # Get all audio paths from directory
+    audio_paths = get_all_audio_paths(audio_dir)
+    
+    if not audio_paths:
+        print(f"No audio files found in {audio_dir}")
+        return []
+    
+    print(f"Processing {len(audio_paths)} audio files...")
+    
+    # Read the CSV to get video metadata
+    video_data = {}
+    if os.path.exists(csv_path):
+        df = pd.read_csv(csv_path)
+        for _, row in df.iterrows():
+            if pd.notnull(row.get('video_id')) and pd.notnull(row.get('video_url')):
+                video_data[row['video_id']] = {
+                    'video_url': row['video_url'],
+                }
+    
+    results = []
+    processed_count = 0
+    
+    for audio_path in audio_paths:
+        if not os.path.exists(audio_path):
+            video_id = os.path.splitext(os.path.basename(audio_path))[0].replace('aud', 'vid')
+            results.append({
+                'video_id': video_id,
+                'audio_file': os.path.basename(audio_path),
+                'error': 'File not found',
+                'probability': 0.0,
+                'is_accident': False,
+                'quality_score': 0.0
+            })
+            continue
+        
+        video_id = os.path.splitext(os.path.basename(audio_path))[0].replace('aud', 'vid')
+        
+        try:
+            prob, is_acc = predict_audio_chunks(audio_path)
+            qscore = compute_audio_quality(audio_path)
+            
+            result = {
+                'video_id': video_id,
+                'audio_file': os.path.basename(audio_path),
+                'error': '',
+                'probability': prob,
+                'is_accident': is_acc,
+                'quality_score': qscore
+            }
+            
+            # Add video URL and name if available
+            if video_id in video_data:
+                result['video_url'] = video_data[video_id]['video_url']
+            
+            results.append(result)
+            processed_count += 1
+            
+            print(f"Processed {processed_count}/{len(audio_paths)}: {video_id} - Prob={prob:.4f}, Crash={is_acc}, Quality={qscore:.4f}")
+            
+        except Exception as e:
+            print(f"Error processing {audio_path}: {e}")
+            results.append({
+                'video_id': video_id,
+                'audio_file': os.path.basename(audio_path),
+                'error': str(e),
+                'probability': 0.0,
+                'is_accident': False,
+                'quality_score': 0.0
+            })
+    
+    # Create DataFrame and save to CSV
+    if results:
+        df_results = pd.DataFrame(results)
+        
+        # Define the output CSV path        
+        # Save to CSV
+        df_results.to_csv(OUTPUT_CSV_PATH, index=False)
+        
+        # Print summary
+        successful_count = len([r for r in results if not r['error']])
+        crash_detected_count = len([r for r in results if r.get('is_accident', False)])
+        avg_quality = sum([r['quality_score'] for r in results if not r['error']]) / successful_count if successful_count > 0 else 0
+        
+        print(f"\n📊 Audio Prediction Summary:")
+        print(f"   Total files: {len(audio_paths)}")
+        print(f"   Successfully processed: {successful_count}")
+        print(f"   Crashes detected: {crash_detected_count}")
+        print(f"   Average quality score: {avg_quality:.4f}")
+        
+        return results
+    else:
+        print("No results to save")
+        return []
+
 if __name__ == "__main__":
-    # Example usage: update with your actual audio paths
-    audio_paths = [
-        'data/extracted-audios/aud_01.mp3',
-        'data/extracted-audios/aud_02.mp3',
-        'data/extracted-audios/aud_03.mp3',
-        'data/extracted-audios/aud_04.mp3',
-        'data/extracted-audios/aud_05.mp3',
-    ]
-    predict_and_quality_print(audio_paths)
+    # Example usage: process all audio files in a directory
+    print("🎵 Audio Module - Processing Directory")
+    print("="*50)
+    print(f"Audio Directory: {AUDIO_DIR}")
+    print(f"CSV Path: {CSV_PATH}")
+    print("="*50)
+    
+    # Process and create CSV
+    results = predict_and_quality_return_with_csv()
+    
+    if results:
+        print(f"\n✅ Successfully processed {len(results)} audio files")
+        print("📁 Results saved to: audio_prediction_results.csv")
+    else:
+        print("❌ No audio files were processed")

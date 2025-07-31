@@ -10,10 +10,10 @@ import tensorflow_hub as hub
 import tensorflow as tf
 from tensorflow.keras.models import load_model
 
-YOUTUBE_API_KEY = 
+YOUTUBE_API_KEY = "AIzaSyA0tzzM9_60mvsABUUUc31HC-wuXsr8kHc"
 
 
-def search_youtube(query, max_results=5):
+def search_youtube(query, max_results=10):
     youtube = build("youtube", "v3", developerKey=YOUTUBE_API_KEY)
     request = youtube.search().list(
         q=query,
@@ -60,7 +60,7 @@ def clear_folder(folder_path):
                 os.remove(file_path)
 
 # Remove ML and quality logic, only keep download and extraction
-def download_youtube_videos(query, max_results=5, download_dir="data/retrieved-videos", audio_dir="data/extracted-audios", csv_path="data/initial_video_data.csv"):
+def download_youtube_videos(query, max_results=10, download_dir="data/retrieved-videos", audio_dir="data/extracted-audios", csv_path="data/initial_video_data.csv"):
     # Clear previous data
     clear_folder(download_dir)
     clear_folder(audio_dir)

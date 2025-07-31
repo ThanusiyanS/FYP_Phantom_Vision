@@ -333,12 +333,12 @@ def deepfake_video_detection_pipeline():
     # Check if video directory exists
     if not os.path.exists(VIDEO_DIR):
         print(f"Video directory not found: {VIDEO_DIR}")
-        return
+        return False
     
     # Check if model file exists
     if not os.path.exists(MODEL_PATH):
         print(f"Model file not found: {MODEL_PATH}")
-        return
+        return False
     
     # Process all videos
     print(f"Processing videos from: {VIDEO_DIR}")
@@ -346,13 +346,14 @@ def deepfake_video_detection_pipeline():
     
     if not results:
         print("No videos were successfully processed.")
-        return
+        return False
     
     # Update CSV with results
     print(f"Updating CSV with {len(results)} processed videos...")
     update_csv_with_results(results)
     
     print("Video deepfake detection process completed successfully!")
+    return True
 
 if __name__ == "__main__":
     deepfake_video_detection_pipeline()

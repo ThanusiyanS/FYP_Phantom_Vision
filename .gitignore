@@ -1,6 +1,6 @@
 
 # Python
-__pycache__/
+*/__pycache__/*
 *.pyc
 *.pyo
 *.pyd
@@ -15,8 +15,8 @@ venv/
 .wav.gz
 .mp3.gz
 .mp4.gz
-deepfake_detection/video
-deepfake_detection/audio
+temp_audio.wav
+
 
 
 # Node
@@ -30,15 +30,37 @@ data/
 
 # macOS
 .DS_Store
+backend/deepfake_detection/tfhub_cache/
+backend/tfhub_cache/
 
 # Logs
 *.log
+backend/deepfake_detection/data/videos-test
 
+backend/deepfake_detection/efficientnet_autoattb4_dfdc.pth
+backend/deepfake_detection/efficientnet_autoattb4_dfdc.pth
+backend/deepfake_detection/fine_tuned_audio_model_v3.pth
+backend/deepfake_detection/fine_tuned_video_model_v4.pth
+backend/deepfake_detection/audio_deepfake_detection_model_v3.pth
+
+backend/video_module/model/
 # VSCode
 .vscode/
+backend/deepfake_detection/audio
+backend/deepfake_detection/video
+backend/deepfake_detection/video
 
 #icpr2020dfdc
 .idea/
+*/.DS_Store
 .DS_Store
 .ipynb_checkpoints/
 icpr2020dfdc/icpr2020dfdc/__pycache__/
+
+# Ignore temporary/cache/output files
+*.mp4
+*.wav
+*.mkv
+__pycache__/
+node_modules/
+output/
