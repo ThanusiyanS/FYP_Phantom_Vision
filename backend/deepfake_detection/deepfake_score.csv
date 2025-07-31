@@ -1,11 +1,35 @@
-resource_id,audio_file,video_file,avg_audio_deepfake_score,avg_voice_deepfake_score,avg_video_deepfake_score,avg_face_deepfake_score,deepfake_prediction_score,deepfake_prediction_label,is_audio_deepfake,is_video_deepfake
-resource_01,item_03.mp3,item_03.mp4,0.0,0,0.9124,0,0,0,0,1
-resource_02,item_02.mp3,item_02.mp4,0.0,0,0.7303,0,0,0,0,1
-resource_03,item_01.mp3,item_01.mp4,0.0,0,0.5498,0,0,0,0,0
-resource_04,item_05.mp3,item_05.mp4,0.0327,0,0.3496,0,0,0,0,0
-resource_05,item_04.mp3,item_04.mp4,0.0,0,0.5449,0,0,0,0,0
-resource_06,item_10.mp3,item_10.mp4,0.0,0,0.3854,0,0,0,0,0
-resource_07,item_06.mp3,item_06.mp4,0.0,0,0.8387,0,0,0,0,1
-resource_08,item_07.mp3,item_07.mp4,0.0,0,0.73,0,0,0,0,1
-resource_09,item_09.mp3,item_09.mp4,0.0156,0,0.3236,0,0,0,0,0
-resource_10,item_08.mp3,item_08.mp4,0.0629,0,0.9309,0,0,0,0,1
+resource_id,audio_file,video_file,avg_audio_deepfake_score,avg_voice_deepfake_score,avg_video_deepfake_score,avg_face_deepfake_score,is_audio_deepfake,is_video_deepfake
+resource_01,,000222.mp4,0.0,0,0.364,0,0,0
+resource_02,,000222_DeepfakedVideo.mp4,0.0,0,0.6395,0,0,0
+resource_03,,000755.mp4,0.0,0,0.3948,0,0,0
+resource_04,,000755_DeepfakedVideo_1.mp4,0.0,0,0.768,0,0,1
+resource_05,,000824_DeepfakedVideo_2.mp4,0.0,0,0.8639,0,0,1
+resource_06,,000824_RealVideo.mp4,0.0,0,0.2338,0,0,0
+resource_07,,000929_DeepfakedVideo_1.mp4,0.0,0,0.4816,0,0,0
+resource_08,,000929_RealVideo.mp4,0.0,0,0.215,0,0,0
+resource_09,,000949_DeepfakedVideo_2.mp4,0.0,0,0.5514,0,0,0
+resource_10,,000949_RealVideo.mp4,0.0,0,0.2099,0,0,0
+resource_11,50-8-wind-0.wav,50-8-wind-0.mp4,0.3212,0,0.3028,0,0,0
+resource_12,50-8.wav,50-8.mp4,0.7521,0,0.2727,0,1,0
+resource_13,,aaagqkcdis.mp4,0.0,0,0.4355,0,0,0
+resource_14,,aaaoqepxnf.mp4,0.0,0,0.6894,0,0,1
+resource_15,,vs1.mp4,0.0,0,0.5564,0,0,0
+resource_16,,youtube video #H--sDM-cpdE.mp4,0.0,0,0.3216,0,0,0
+resource_17,,youtube video #HdEZeQ9ePWo.mp4,0.0,0,0.4114,0,0,0
+resource_18,,youtube video #OCVAO0Ksmac.mp4,0.0,0,0.4854,0,0,0
+resource_19,,youtube video #jbkuqT7k3Bg.mp4,0.0,0,0.8385,0,0,1
+resource_20,,youtube video #v-_fwsuZlBc.mp4,0.0,0,0.6632,0,0,1
+resource_21,50-10.wav,,0.0,0,0.0,0,0,0
+resource_22,file2.wav_16k.wav_norm.wav_mono.wav_silence.wav_2sec.wav,,0.0,0,0.0,0,0,0
+resource_23,50-10-thunderstorm-0.wav,,0.0,0,0.0,0,0,0
+resource_24,file6.wav_16k.wav_norm.wav_mono.wav_silence.wav_2sec.wav,,0.0,0,0.0,0,0,0
+resource_25,file16.wav_16k.wav_norm.wav_mono.wav_silence.wav_2sec.wav,,0.0,0,0.0,0,0,0
+resource_26,deepfaked_0-0-0-thunderstorm-0.wav,,1.0,0,0.0,0,1,0
+resource_27,file3.wav_16k.wav_norm.wav_mono.wav_silence.wav_2sec.wav,,0.0,0,0.0,0,0,0
+resource_28,file13.wav_16k.wav_norm.wav_mono.wav_silence.wav_2sec.wav,,0.0,0,0.0,0,0,0
+resource_29,deepfaked_0-0-0-rain-0.wav,,1.0,0,0.0,0,1,0
+resource_30,deepfaked_0-0-0-road_traffic-0.wav,,1.0,0,0.0,0,1,0
+resource_31,file19.wav_16k.wav_norm.wav_mono.wav_silence.wav_2sec.wav,,0.0,0,0.0,0,0,0
+resource_32,file10.wav_16k.wav_norm.wav_mono.wav_silence.wav_2sec.wav,,0.0,0,0.0,0,0,0
+resource_33,50-10-wind-0.wav,,0.0,0,0.0,0,0,0
+resource_34,50-10-road_traffic-0.wav,,0.0,0,0.0,0,0,0

@@ -17,7 +17,7 @@ except ImportError:
     print("Warning: pytesseract not available. OCR-based text removal will be skipped.")
 
 # --- CONFIG ---
-VIDEO_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..","data","retrieved-videos")
+VIDEO_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "video")
 CSV_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), "deepfake_score.csv")
 MODEL_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), "fine_tuned_video_model_v4.pth")
 DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
@@ -228,32 +228,20 @@ def predict_deepfake(video_path, chunk_duration=10):
     return avg_score
 
 # --- PROCESS ALL VIDEOS ---
-def process_video_files(video_dir, predict_func):
-    """
-    Process all video files in the specified directory and return results.
-    
-    Args:
-        video_dir (str): Directory containing video files
-        predict_func (callable): Function to predict deepfake scores
-    
-    Returns:
-        list: List of dictionaries containing video file names and their scores
-    """
-    results = []
-    for idx, video_file in enumerate(sorted(os.listdir(video_dir)), 1):
-        if video_file.endswith(".mp4"):
-            video_path = os.path.join(video_dir, video_file)
-            print(f"Processing {video_file}...")
-            score = predict_func(video_path)
-            if score is not None:
-                results.append({
-                    "video_file": video_file,
-                    "avg_video_deepfake_score": round(score, 4)
-                })
-                print(f"Score: {score:.4f}")
-            else:
-                print(f"Skipped {video_file} (too short or processing failed)")
-    return results
+results = []
+for idx, video_file in enumerate(sorted(os.listdir(VIDEO_DIR)), 1):
+    if video_file.endswith(".mp4"):
+        video_path = os.path.join(VIDEO_DIR, video_file)
+        print(f"Processing {video_file}...")
+        score = predict_deepfake(video_path)
+        if score is not None:
+            results.append({
+                "video_file": video_file,
+                "avg_video_deepfake_score": round(score, 4)
+            })
+            print(f"Score: {score:.4f}")
+        else:
+            print(f"Skipped {video_file} (too short or processing failed)")
 
 # --- UPDATE OR CREATE CSV ---
 csv_columns = [
@@ -262,53 +250,15 @@ csv_columns = [
     "is_audio_deepfake", "is_video_deepfake"
 ]
 
-def calculate_prediction_metrics(score):
-    """
-    Calculate prediction metrics based on video deepfake score.
+if os.path.exists(CSV_PATH):
+    df = pd.read_csv(CSV_PATH)
+    # Ensure required columns exist
+    for col in csv_columns:
+        if col not in df.columns:
+            df[col] = ""
+    # Reorder columns if necessary
+    df = df[csv_columns]
     
-    Args:
-        score (float): Video deepfake score
-    
-    Returns:
-        tuple: (pred_score, pred_label, is_video_deepfake)
-    """
-    pred_score = round(score, 4) if score != "" else ""
-    pred_label = "1" if pred_score != "" and pred_score > 0.65 else ("0" if pred_score != "" else "")
-    is_video_deepfake = 1 if pred_score != "" and pred_score > 0.65 else 0
-    return pred_score, pred_label, is_video_deepfake
-
-def get_next_resource_id(existing_ids):
-    """
-    Generate the next available resource ID.
-    
-    Args:
-        existing_ids (list): List of existing resource IDs
-    
-    Returns:
-        str: Next available resource ID
-    """
-    next_id = 1
-    if existing_ids:
-        nums = [int(str(i).replace("vid_", "").replace("resource_", "")) 
-                for i in existing_ids 
-                if (str(i).startswith("vid_") or str(i).startswith("resource_")) 
-                and str(i).replace("vid_", "").replace("resource_", "").isdigit()]
-        if nums:
-            next_id = max(nums) + 1
-    return f"resource_{next_id:02d}"
-
-def update_existing_csv(df, results, csv_columns):
-    """
-    Update existing CSV with new video processing results.
-    
-    Args:
-        df (DataFrame): Existing CSV data
-        results (list): List of video processing results
-        csv_columns (list): List of CSV column names
-    
-    Returns:
-        DataFrame: Updated DataFrame
-    """
     video_df = pd.DataFrame(results)
     
     # Update matching rows
@@ -320,9 +270,7 @@ def update_existing_csv(df, results, csv_columns):
         video_match = df["video_file"] == video_file
         
         # Check if audio_file with same base name exists in CSV
-        audio_match = df["audio_file"].apply(
-            lambda x: os.path.splitext(x)[0] if isinstance(x, str) and x else ""
-        ) == video_base_name
+        audio_match = df["audio_file"].apply(lambda x: os.path.splitext(x)[0] if isinstance(x, str) and x else "") == video_base_name
         
         pred_score = round(vrow["avg_video_deepfake_score"], 4) if vrow["avg_video_deepfake_score"] != "" else ""
         pred_label = "1" if pred_score != "" and pred_score > 0.68 else ("0" if pred_score != "" else "")
@@ -340,7 +288,12 @@ def update_existing_csv(df, results, csv_columns):
         else:
             # Add as new row with new resource_id
             existing_ids = df["resource_id"].dropna().tolist()
-            new_resource_id = get_next_resource_id(existing_ids)
+            next_id = 1
+            if existing_ids:
+                nums = [int(str(i).replace("vid_", "").replace("resource_", "")) for i in existing_ids if (str(i).startswith("vid_") or str(i).startswith("resource_")) and str(i).replace("vid_", "").replace("resource_", "").isdigit()]
+                if nums:
+                    next_id = max(nums) + 1
+            new_resource_id = f"resource_{next_id:02d}"
             new_row = {col: "" for col in csv_columns}
             new_row["resource_id"] = new_resource_id
             new_row["video_file"] = video_file
@@ -352,19 +305,10 @@ def update_existing_csv(df, results, csv_columns):
             new_row["is_video_deepfake"] = is_video_deepfake
             df = pd.concat([df, pd.DataFrame([new_row])], ignore_index=True)
     
-    return df
-
-def create_new_csv(results, csv_columns):
-    """
-    Create a new CSV file with video processing results.
-    
-    Args:
-        results (list): List of video processing results
-        csv_columns (list): List of CSV column names
-    
-    Returns:
-        DataFrame: New DataFrame with video results
-    """
+    df.to_csv(CSV_PATH, index=False)
+    print(f"Updated {CSV_PATH} with {len(results)} video files processed")
+else:
+    # If no CSV exists, just write the video results with new resource_ids
     video_df = pd.DataFrame(results)
     video_df["resource_id"] = [f"resource_{i+1:02d}" for i in range(len(video_df))]
     video_df["audio_file"] = ""
